@@ -10,17 +10,9 @@ web.py HTTP API. ALL control endpoints are `GET` requests. This is verified
 against `urls.py` and `webpages.py` in the SIP master branch.
 
 ## Setup
-Self-hosting or remote access:
-  SIP_BASE_URL  -> environment variable (default `http://<host>:8080`, override as needed)
-  SIP_PASSWORD  -> environment variable (never hardcoded here)
-
-```bash
-# Both vars must be provided in the environment:
-#   export SIP_BASE_URL="http://<host>:<port>"
-#   export SIP_PASSWORD="****"
-B="$SIP_BASE_URL"
-PW="" ; [ -n "$SIP_PASSWORD" ] && PW="?pw=$SIP_PASSWORD"    # omit PW entirely if unset
-```
+Set these environment variables before use:
+  - `SIP_BASE_URL` — controller base URL, e.g. `http://<host>:8080`
+  - `SIP_PASSWORD` — plaintext password; omitted entirely if auth is disabled on the device
 
 ## Authentication (verified from helpers.check_login)
 - SIP has a "use password" flag `upas`. If `upas == 0` -> NO auth required.
@@ -44,29 +36,6 @@ PW="" ; [ -n "$SIP_PASSWORD" ] && PW="?pw=$SIP_PASSWORD"    # omit PW entirely i
 | GET | `/cp` | add/modify program | `pid`, `v=` JSON program object |
 | GET | `/restart` | restart SIP | — |
 
-## Examples
-```bash
-# Read-only status (safe to run anytime)
-curl -s "$B/api/status$PW" | python3 -m json.tool
-
-# Run station #2 for 5 minutes — run-once needs NO manual mode
-curl -s "$B/cr$PW?t=[0,300,0,0,0,0,0,0]"
-
-# Run saved program #0 now
-curl -s "$B/rp$PW?pid=0"
-
-# Manual control of a single station (needs manual mode first)
-curl -s "$B/cv$PW?mm=1"                     # enable manual mode
-curl -s "$B/sn$PW?sid=3&set_to=1&set_time=600"   # station 3 ON 10 min
-curl -s "$B/sn$PW?sid=3&set_to=0"          # station 3 OFF
-
-# All stations off
-curl -s "$B/cv$PW?en=0"
-
-# Rain delay 12h
-curl -s "$B/cv$PW?rd=12"
-```
-
 ## Operational SOP (user conventions)
 When the user gives verbal commands, switch the Manual/Auto mode FIRST, then act:
 - **"oprește stațiile" (stop the stations)** → `GET /cv?mm=1` (Manual) first, then stop
@@ -85,4 +54,3 @@ Do NOT skip the mode switch — Manual is expected for stopping, Auto for starti
   independent of these endpoints — wiring-side, not API-side.
 - Default HTTP port is **8080** (option `htp`); adjust if behind a proxy.
 - Always `GET /api/status` first to confirm state before/after a write op.
-- For publishing this skill, use env-var placeholders and see `references/publish-prep.md`.
